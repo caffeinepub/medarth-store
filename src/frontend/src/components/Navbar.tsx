@@ -1,8 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { LogIn, LogOut, ShoppingCart } from "lucide-react";
 import { motion } from "motion/react";
 import { useCart } from "../context/CartContext";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 interface NavbarProps {
   onAdminClick?: () => void;
@@ -16,6 +17,7 @@ export default function Navbar({
   onStoreClick,
 }: NavbarProps) {
   const { totalItems, setCartOpen } = useCart();
+  const { identity, login, clear, isLoggingIn } = useInternetIdentity();
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -83,12 +85,42 @@ export default function Navbar({
           )}
         </motion.div>
 
-        {/* Cart button */}
+        {/* Right side actions */}
         <motion.div
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4 }}
+          className="flex items-center gap-2"
         >
+          {/* Login / Logout */}
+          {identity ? (
+            <Button
+              data-ocid="nav.logout_button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-foreground/70 hover:text-foreground"
+              onClick={clear}
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+          ) : (
+            <Button
+              data-ocid="nav.login_button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-foreground/70 hover:text-primary"
+              onClick={login}
+              disabled={isLoggingIn}
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {isLoggingIn ? "Logging in…" : "Login"}
+              </span>
+            </Button>
+          )}
+
+          {/* Cart */}
           <Button
             data-ocid="nav.cart_button"
             variant="outline"

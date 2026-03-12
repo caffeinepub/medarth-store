@@ -26,12 +26,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import {
+  Loader2,
+  LogIn,
+  Pencil,
+  Plus,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Product } from "../backend.d";
 import ProductForm from "../components/ProductForm";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useAllOrders,
   useAllProducts,
@@ -58,6 +66,7 @@ export default function AdminPage() {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
   const updateOrderStatus = useUpdateOrderStatus();
+  const { identity, login, isLoggingIn } = useInternetIdentity();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -78,17 +87,43 @@ export default function AdminPage() {
     return (
       <div
         data-ocid="admin.error_state"
-        className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+        className="flex flex-col items-center justify-center min-h-[60vh] gap-6"
       >
-        <ShieldCheck className="h-12 w-12 text-muted-foreground" />
-        <div className="text-center">
-          <h2 className="font-display text-2xl font-semibold">
-            Admin Access Required
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            Please log in with an admin account to access this panel.
-          </p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <div className="p-4 rounded-full bg-primary/10">
+            <ShieldCheck className="h-12 w-12 text-primary" />
+          </div>
+          <div className="text-center">
+            <h2 className="font-display text-2xl font-semibold">
+              Admin Access Required
+            </h2>
+            <p className="text-muted-foreground mt-2 max-w-sm">
+              {identity
+                ? "Your account doesn't have admin privileges. Please contact the store owner."
+                : "Please log in with your Internet Identity to access the admin panel."}
+            </p>
+          </div>
+          {!identity && (
+            <Button
+              data-ocid="admin.login_button"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 mt-2"
+              onClick={login}
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LogIn className="h-4 w-4" />
+              )}
+              {isLoggingIn ? "Connecting…" : "Login with Internet Identity"}
+            </Button>
+          )}
+        </motion.div>
       </div>
     );
   }
