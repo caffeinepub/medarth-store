@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,14 @@ export default function CheckoutModal({ open, onClose }: CheckoutModalProps) {
   const { items, subtotal, clearCart } = useCart();
   const placeOrder = usePlaceOrder();
   const [orderId, setOrderId] = useState<bigint | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", address: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    shipping: "",
+    billing: "",
+  });
+  const [sameAsShipping, setSameAsShipping] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,10 +43,17 @@ export default function CheckoutModal({ open, onClose }: CheckoutModalProps) {
         quantity: BigInt(i.quantity),
         unitPrice: i.product.price,
       }));
+      const billingAddr = sameAsShipping ? form.shipping : form.billing;
+      const shippingAddressJson = JSON.stringify({
+        phone: form.phone,
+        shipping: form.shipping,
+        billing: billingAddr,
+        paymentStatus: "Pending",
+      });
       const id = await placeOrder.mutateAsync({
         customerName: form.name,
         customerEmail: form.email,
-        shippingAddress: form.address,
+        shippingAddress: shippingAddressJson,
         items: orderItems,
       });
       setOrderId(id);
@@ -51,13 +66,14 @@ export default function CheckoutModal({ open, onClose }: CheckoutModalProps) {
 
   const handleClose = () => {
     setOrderId(null);
-    setForm({ name: "", email: "", address: "" });
+    setForm({ name: "", email: "", phone: "", shipping: "", billing: "" });
+    setSameAsShipping(false);
     onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">
             {orderId ? "Order Confirmed!" : "Checkout"}
@@ -120,49 +136,113 @@ export default function CheckoutModal({ open, onClose }: CheckoutModalProps) {
               </div>
             </div>
 
-            {/* Form fields */}
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="checkout-name">Full Name</Label>
-                <Input
-                  id="checkout-name"
-                  data-ocid="checkout.input"
-                  placeholder="Your full name"
-                  required
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                />
+            {/* Contact Details */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                Contact Details
+              </p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="checkout-name">Full Name *</Label>
+                  <Input
+                    id="checkout-name"
+                    data-ocid="checkout.input"
+                    placeholder="Your full name"
+                    required
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="checkout-email">Email *</Label>
+                  <Input
+                    id="checkout-email"
+                    data-ocid="checkout.input"
+                    type="email"
+                    placeholder="your@email.com"
+                    required
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, email: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="checkout-phone">Phone Number *</Label>
+                  <Input
+                    id="checkout-phone"
+                    data-ocid="checkout.input"
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    required
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, phone: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="checkout-email">Email</Label>
-                <Input
-                  id="checkout-email"
-                  data-ocid="checkout.input"
-                  type="email"
-                  placeholder="your@email.com"
-                  required
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, email: e.target.value }))
-                  }
-                />
+            </div>
+
+            {/* Shipping Address */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                Shipping Address
+              </p>
+              <Textarea
+                id="checkout-shipping"
+                data-ocid="checkout.textarea"
+                placeholder="House/Flat no., Street, City, State, Pincode"
+                required
+                rows={3}
+                value={form.shipping}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, shipping: e.target.value }))
+                }
+              />
+            </div>
+
+            {/* Billing Address */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Billing Address
+                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="same-as-shipping"
+                    data-ocid="checkout.checkbox"
+                    checked={sameAsShipping}
+                    onCheckedChange={(v) => setSameAsShipping(!!v)}
+                  />
+                  <Label
+                    htmlFor="same-as-shipping"
+                    className="text-xs text-muted-foreground cursor-pointer"
+                  >
+                    Same as shipping
+                  </Label>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="checkout-address">Shipping Address</Label>
+              {!sameAsShipping && (
                 <Textarea
-                  id="checkout-address"
-                  data-ocid="checkout.input"
-                  placeholder="Full shipping address"
+                  id="checkout-billing"
+                  data-ocid="checkout.textarea"
+                  placeholder="House/Flat no., Street, City, State, Pincode"
                   required
                   rows={3}
-                  value={form.address}
+                  value={form.billing}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, address: e.target.value }))
+                    setForm((f) => ({ ...f, billing: e.target.value }))
                   }
                 />
-              </div>
+              )}
+              {sameAsShipping && (
+                <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                  {form.shipping || "(same as shipping address)"}
+                </p>
+              )}
             </div>
 
             <Button

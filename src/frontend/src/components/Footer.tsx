@@ -1,9 +1,7 @@
-import { Heart, Leaf } from "lucide-react";
+import { Leaf } from "lucide-react";
 
 export default function Footer() {
   const year = new Date().getFullYear();
-  const hostname =
-    typeof window !== "undefined" ? window.location.hostname : "";
 
   return (
     <footer id="about" className="bg-foreground text-background py-12">
@@ -65,16 +63,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-background/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-background/40">
+        <div className="border-t border-background/10 pt-6 text-sm text-background/40">
           <span>© {year} Medarth. All rights reserved.</span>
-          <a
-            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(hostname)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:text-background/60 transition-colors"
-          >
-            Built with <Heart className="h-3 w-3 mx-0.5" /> using caffeine.ai
-          </a>
         </div>
       </div>
     </footer>

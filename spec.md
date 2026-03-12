@@ -1,34 +1,36 @@
-# Medarth Online Store
+# Medarth Store
 
 ## Current State
-New project, no existing code.
+- Admin orders tab shows a basic table: Order ID, Customer Name, Email, Total, Status dropdown
+- Backend Order type has: id, customerName, customerEmail, shippingAddress, items, totalAmount, status
+- Checkout form only collects: name, email, shipping address
+- No phone number or billing address is stored on orders
+- PaymentStatus field does not exist on Order
 
 ## Requested Changes (Diff)
 
 ### Add
-- Online store for Medarth, a dermatology/skincare brand
-- Product catalog page with derma product listings (name, description, price, image, category)
-- Product detail page
-- Shopping cart (add/remove items, quantity control)
-- Checkout flow (name, email, address, order summary)
-- Admin panel (login-protected) to manage products: add, edit, delete
-- Order management for admin
-- Categories for derma products (e.g. Moisturizers, Serums, Sunscreens, Cleansers, Treatments)
+- `phone` field to Order type in backend
+- `billingAddress` field to Order type in backend
+- `paymentStatus` field to Order type in backend (default: "Pending")
+- Phone and billing address inputs in CheckoutModal
+- "Same as shipping" checkbox for billing address in CheckoutModal
+- Comprehensive order cards in admin Orders tab showing all fields
 
 ### Modify
-- N/A
+- `placeOrder` backend function to accept phone and billingAddress parameters
+- CheckoutModal form state to include phone and billingAddress
+- Admin Orders tab: replace basic table rows with rich expandable card layout showing all customer and delivery details
+- `useQueries` hook for placeOrder to pass new fields
 
 ### Remove
-- N/A
+- Nothing removed
 
 ## Implementation Plan
-1. Backend: Products CRUD (id, name, description, price, imageUrl, category, stock, featured)
-2. Backend: Orders (id, customerInfo, items, total, status, timestamp)
-3. Backend: Cart state managed on frontend
-4. Backend: Admin authorization for product/order management
-5. Frontend: Landing/hero section with Medarth branding
-6. Frontend: Product catalog with category filter
-7. Frontend: Product detail modal/page
-8. Frontend: Shopping cart drawer
-9. Frontend: Checkout form and order confirmation
-10. Frontend: Admin dashboard (product management, order list)
+1. Regenerate backend with updated Order type (add phone, billingAddress, paymentStatus fields) and updated placeOrder signature
+2. Update CheckoutModal to collect phone and billingAddress (with same-as-shipping checkbox)
+3. Redesign admin Orders tab with card-per-order layout or expanded table showing:
+   - Order ID, date/time, total, order status (editable), payment status
+   - Customer: name, email, phone
+   - Shipping address, billing address
+   - Items ordered (product name, qty, price)

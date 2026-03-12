@@ -1,7 +1,15 @@
+import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Order, OrderItem, Product } from "../backend.d";
+import type {
+  Order,
+  OrderItem,
+  Product,
+  UserProfile,
+  UserRole,
+} from "../backend.d";
 import { sampleProducts } from "../data/sampleProducts";
 import { useActor } from "./useActor";
+import { useInternetIdentity } from "./useInternetIdentity";
 
 export function useAllProducts() {
   const { actor, isFetching } = useActor();
@@ -54,6 +62,19 @@ export function useIsAdmin() {
       return actor.isCallerAdmin();
     },
     enabled: !isFetching,
+  });
+}
+
+export function useAssignUserRole() {
+  const { actor } = useActor();
+  return useMutation({
+    mutationFn: async ({
+      principal,
+      role,
+    }: { principal: Principal; role: UserRole }) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.assignCallerUserRole(principal, role);
+    },
   });
 }
 
@@ -130,5 +151,42 @@ export function useUpdateOrderStatus() {
       return actor.updateOrderStatus(orderId, status);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
+  });
+}
+
+export function useCallerUserProfile() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  return useQuery<UserProfile | null>({
+    queryKey: ["callerProfile"],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getCallerUserProfile();
+    },
+    enabled: !!actor && !isFetching && !!identity,
+  });
+}
+
+export function useSaveCallerUserProfile() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (profile: UserProfile) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.saveCallerUserProfile(profile);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["callerProfile"] }),
+  });
+}
+
+export function useOrdersByEmail(email: string) {
+  const { actor, isFetching } = useActor();
+  return useQuery<Order[]>({
+    queryKey: ["ordersByEmail", email],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getOrdersByEmail(email);
+    },
+    enabled: !!actor && !isFetching && email.length > 0,
   });
 }

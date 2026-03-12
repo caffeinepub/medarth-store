@@ -75,12 +75,45 @@ actor {
     shippingAddress : Text;
     items : [OrderItem];
     totalAmount : Float;
-    status : Text; // pending, processing, shipped, delivered
+    status : Text;
+  };
+
+  public type UserEntry = {
+    principal : Principal;
+    role : Text;
   };
 
   let products = Map.empty<Text, Product>();
   let orders = Map.empty<Nat, Order>();
   var nextOrderId = 1;
+
+  public shared ({ caller }) func assignUserRole(user : Principal, role : Text) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can assign roles");
+    };
+    let userRole : AccessControl.UserRole = switch (role) {
+      case ("admin") { #admin };
+      case ("user") { #user };
+      case (_) { Runtime.trap("Invalid role. Use 'admin' or 'user'") };
+    };
+    AccessControl.assignRole(accessControlState, caller, user, userRole);
+  };
+
+  public query ({ caller }) func getAllUsers() : async [UserEntry] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can list users");
+    };
+    accessControlState.userRoles.entries().map(
+      func((p, r) : (Principal, AccessControl.UserRole)) : UserEntry {
+        let roleText = switch (r) {
+          case (#admin) { "admin" };
+          case (#user) { "user" };
+          case (#guest) { "guest" };
+        };
+        { principal = p; role = roleText };
+      }
+    ).toArray();
+  };
 
   public shared ({ caller }) func createProduct(product : Product) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
